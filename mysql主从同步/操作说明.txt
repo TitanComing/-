@@ -1,0 +1,84 @@
+主库：
+管理员身份（必须，必须，必须）运行cmd，并cd到bin下，输入命令：
+        ./mysqld.exe --initialize --user=mysql --console(bin目录下生成data文件，系统默认创建数据库，此时还会生成一个临时的密码！记住密码）
+
+注册服务，输入命令：
+        ./mysqld.exe --install mysql-master --defaults-file="D:\Program Files\mysql-8.0.17\mysql-8.0.17-master\my.ini"
+
+启动MySQL服务，输入命令：（默认是启动的，可以先登陆数据库，如果服务没有启动，再执行此命令）
+        net start mysql-master
+
+登陆mysql，输入命令：
+        ./mysql.exe -u root -P3307 -p
+
+修改密码，输入命令：
+        ALTER USER 'root'@'localhost' IDENTIFIED BY '新密码';
+
+退出mysql，输入命令：
+        exit;
+
+重新登陆OK。恭喜，主库完成！！！
+
+
+从库：
+管理员身份（必须，必须，必须）运行cmd，并cd到C:\mysql-8.0.13\slave\3308\bin下，输入命令：
+        ./mysqld.exe --initialize --user=mysql --console
+
+注册服务，输入命令：
+        ./mysqld.exe --install mysql-slave3308 --defaults-file="D:\Program Files\mysql-8.0.17\mysql-8.0.17-salve\my.ini"
+
+启动MySQL服务，输入命令：（默认是启动的，可以先登陆数据库，如果服务没有启动，再执行此命令）
+        net start mysql-slave3308
+
+登陆mysql，输入命令：
+        ./mysql.exe -u root -P3308 -p
+
+修改密码，输入命令：
+        ALTER USER 'root'@'localhost' IDENTIFIED BY '新密码';
+
+退出mysql，输入命令：
+        exit;
+重新登陆OK	
+
+
+
+
+主库（master）关联从库（slave）配置
+
+登陆master主库，创建一个用于让从数据库连接的用户，输入命令（自定义用户work，密码为work123456）
+        CREATE USER 'work'@'%' IDENTIFIED WITH mysql_native_password BY 'work123456';
+
+给用户授权，输入命令
+        GRANT REPLICATION SLAVE ON *.* TO 'work'@'%';
+
+刷新权限，输入命令
+        flush privileges;
+
+查看master的状态，输入命令
+         show master status;
+
+        
+
+登陆slave从库，在slave从库节点上设置master主库主节点参数，输入命令    
+        CHANGE MASTER TO
+        MASTER_HOST='localhost',  
+		MASTER_PORT=3307,
+        MASTER_USER='work',
+        MASTER_PASSWORD='work123456',
+        MASTER_LOG_FILE='master-bin.000002',
+        MASTER_LOG_POS=1115;
+
+注意，MASTER_LOG_FILE和master状态里的File保持一致，MASTER_LOG_POS和master状态里的Positon保持一致
+
+开启主从同步，输入命令
+        start slave;
+
+查看主从同步状态，输入命令
+        show slave status\G;
+
+        
+
+Slave_IO_Running和Slave_SQL_Running的状态都为YES才表示同步成功！！！！
+
+		
+	
